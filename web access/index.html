@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>B0uncer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f8f9fa;color:#1a1a1a;min-height:100vh}
+
+header{background:#fff;border-bottom:1px solid #e5e7eb;padding:14px 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:18px;font-weight:700;letter-spacing:-0.5px}
+.live{display:flex;align-items:center;gap:8px;font-size:13px;color:#6b7280}
+.live-dot{width:8px;height:8px;background:#22c55e;border-radius:50%;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.35}}
+
+main{max-width:1200px;margin:0 auto;padding:24px}
+
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:24px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:8px;padding:20px}
+.card-label{font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px}
+.card-value{font-size:32px;font-weight:700;line-height:1}
+.v-total{color:#111}
+.v-blocked{color:#dc2626}
+.v-warned{color:#d97706}
+.v-allowed{color:#16a34a}
+
+.toolbar{display:flex;justify-content:flex-end;margin-bottom:12px}
+.btn-clear{background:#fff;border:1px solid #d1d5db;color:#374151;padding:7px 16px;border-radius:6px;cursor:pointer;font-size:13px;font-weight:500;transition:background .15s}
+.btn-clear:hover{background:#f3f4f6}
+
+.table-wrap{background:#fff;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{padding:11px 16px;text-align:left;font-size:11px;font-weight:600;color:#6b7280;text-transform:uppercase;letter-spacing:0.06em;border-bottom:1px solid #e5e7eb;background:#f9fafb}
+tbody tr{border-bottom:1px solid #f3f4f6}
+tbody tr:last-child{border-bottom:none}
+tbody tr.r-block{background:#fef2f2}
+tbody tr.r-warn{background:#fffbeb}
+tbody tr.r-allow{background:#f0fdf4}
+tbody td{padding:11px 16px;font-size:13px;vertical-align:middle}
+
+.cmd{font-family:'SF Mono',Menlo,Monaco,Consolas,monospace;font-size:12px;max-width:480px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+
+.pill{display:inline-flex;align-items:center;gap:5px;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:600}
+.pdot{width:6px;height:6px;border-radius:50%;flex-shrink:0}
+.p-block{background:#fee2e2;color:#991b1b}
+.p-block .pdot{background:#ef4444}
+.p-warn{background:#fef3c7;color:#92400e}
+.p-warn .pdot{background:#f59e0b}
+.p-allow{background:#dcfce7;color:#166534}
+.p-allow .pdot{background:#22c55e}
+
+.risk-score{font-size:13px;color:#6b7280;font-weight:500}
+.ts{color:#9ca3af;font-size:12px;white-space:nowrap}
+.empty{padding:56px;text-align:center;color:#9ca3af;font-size:14px}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo">B0uncer</div>
+  <div class="live"><div class="live-dot"></div>Live</div>
+</header>
+<main>
+  <div class="stats">
+    <div class="card">
+      <div class="card-label">Commands</div>
+      <div class="card-value v-total" id="s-total">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Blocked</div>
+      <div class="card-value v-blocked" id="s-blocked">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Warned</div>
+      <div class="card-value v-warned" id="s-warned">0</div>
+    </div>
+    <div class="card">
+      <div class="card-label">Allowed</div>
+      <div class="card-value v-allowed" id="s-allowed">0</div>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="btn-clear" onclick="clearAll()">Clear</button>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Command</th>
+          <th>Decision</th>
+          <th>Risk Score</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <tr><td colspan="4" class="empty">No commands recorded yet.</td></tr>
+      </tbody>
+    </table>
+  </div>
+</main>
+<script>
+const API = 'http://localhost:3456';
+
+function pill(action) {
+  if (action === 'block') return '<span class="pill p-block"><span class="pdot"></span>Blocked</span>';
+  if (action === 'warn')  return '<span class="pill p-warn"><span class="pdot"></span>Warned</span>';
+  return '<span class="pill p-allow"><span class="pdot"></span>Allowed</span>';
+}
+
+function rowClass(action) {
+  if (action === 'block') return 'r-block';
+  if (action === 'warn')  return 'r-warn';
+  return 'r-allow';
+}
+
+function fmtTime(ts) {
+  try {
+    const d = new Date(ts.endsWith('Z') ? ts : ts + 'Z');
+    return d.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  } catch(e) { return ts; }
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function refresh() {
+  try {
+    const [sr, er] = await Promise.all([
+      fetch(API + '/api/stats'),
+      fetch(API + '/api/events')
+    ]);
+    const stats  = await sr.json();
+    const events = await er.json();
+
+    document.getElementById('s-total').textContent   = stats.total   || 0;
+    document.getElementById('s-blocked').textContent = stats.blocked || 0;
+    document.getElementById('s-warned').textContent  = stats.warned  || 0;
+    document.getElementById('s-allowed').textContent = stats.allowed || 0;
+
+    const tbody = document.getElementById('tbody');
+    if (!events || events.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="4" class="empty">No commands recorded yet.</td></tr>';
+      return;
+    }
+    tbody.innerHTML = events.map(e =>
+      `<tr class="${rowClass(e.action)}">
+        <td class="ts">${fmtTime(e.timestamp)}</td>
+        <td><span class="cmd" title="${esc(e.command)}">${esc(e.command)}</span></td>
+        <td>${pill(e.action)}</td>
+        <td><span class="risk-score">${e.risk_score}</span></td>
+      </tr>`
+    ).join('');
+  } catch(_) {}
+}
+
+async function clearAll() {
+  try {
+    await fetch(API + '/api/clear', {method:'POST'});
+    refresh();
+  } catch(_) {}
+}
+
+refresh();
+setInterval(refresh, 2000);
+</script>
+</body>
+</html>

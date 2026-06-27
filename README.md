@@ -1,6 +1,6 @@
 <div align="center">
 
-# B0uncer
+# B0uncer - Beta 
 
 **Shell-level firewall for Claude Code.**  
 Every command Claude runs is evaluated before it touches your system.
